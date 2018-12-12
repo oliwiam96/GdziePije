@@ -7,7 +7,9 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.icu.text.DecimalFormat
+import android.location.Criteria
 import android.location.Location
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.support.annotation.RequiresApi
@@ -195,7 +197,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     popupWindow.dismiss()
                     true
                 }
-            } else{
+            } else {
 
                 val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
                 val popupView = inflater.inflate(R.layout.person_popup, null)
@@ -251,11 +253,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
 
+    @SuppressLint("MissingPermission")
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
         when (item.itemId) {
             R.id.nav_camera -> {
-                // Handle the camera action
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(psychodelaX, psychodelaY), zoomLevel))
             }
             R.id.nav_slideshow -> {
 
@@ -264,7 +267,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             }
             R.id.nav_loc -> {
-
+                val service = getSystemService(LOCATION_SERVICE) as LocationManager
+                val criteria = Criteria();
+                val  provider = service.getBestProvider (criteria, false)
+                val location = service.getLastKnownLocation(provider)
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), zoomLevel))
             }
         }
 
