@@ -17,14 +17,15 @@
         tools:context="MainActivity" />
 
 
-    <AutoCompleteTextView
-        android:id="@+id/autoCompleteTextView2"
+    <EditText
+        android:id="@+id/lookupTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginHorizontal="40dp"
         android:layout_marginTop="85dp"
-        android:hint="@string/lookup_pubs_hint_map_activity"/>
+        android:hint="@string/lookup_pubs_hint_map_activity"
+        />
 
 </RelativeLayout>

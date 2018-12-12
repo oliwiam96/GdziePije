@@ -20,10 +20,22 @@ import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.*
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.widget.EditText
+import android.widget.SearchView
+import android.widget.TextView
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.oliwia.piwo.R.id.lookupTextView
+import com.oliwia.piwo.R.id.nav_view
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import android.view.View.OnTouchListener
@@ -31,6 +43,8 @@ import android.widget.*
 import com.google.android.gms.maps.model.*
 import kotlin.math.round
 
+
+const val LOOKUP_TEXT = "LOOKUP_TEXT"
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
@@ -67,6 +81,28 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         toggle.syncState()
 
         nav_view.setNavigationItemSelectedListener(this)
+
+        addListenersToLookupTextView()
+    }
+
+    private fun addListenersToLookupTextView() {
+        val lookupTextView = findViewById<EditText>(lookupTextView)
+        lookupTextView.addTextChangedListener(object: TextWatcher{
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+
+            }
+
+            override fun onTextChanged(enteredText: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                enteredText?.let {
+                    openLookupActivity(it)
+                }
+            }
+
+            override fun afterTextChanged(p0: Editable?) {
+
+            }
+
+        })
     }
 
     private fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
@@ -209,6 +245,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         drawer_layout.closeDrawer(GravityCompat.START)
         return true
+    }
+    fun openLookupActivity(enteredText: CharSequence){
+        val intent = Intent(this, com.oliwia.piwo.SearchView::class.java).apply {
+            putExtra(LOOKUP_TEXT, enteredText)
+        }
+        startActivity(intent)
     }
 
     @RequiresApi(Build.VERSION_CODES.N)

@@ -41,12 +41,14 @@
         <!-- Sample AdMob App ID: ca-app-pub-3940256099942544~3347511713 -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-6076046118973408~5198951678" />
+            android:value="ca-app-pub-6076046118973408~5198951678"/>
+
 
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps" />
         <activity android:name=".DescriptionAcitivity"></activity>
+        <activity android:name=".SearchView" />
     </application>
 
 </manifest>
