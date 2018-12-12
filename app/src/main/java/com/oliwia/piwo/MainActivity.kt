@@ -4,6 +4,8 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.icu.text.DecimalFormat
 import android.location.Location
 import android.os.Build
@@ -12,6 +14,7 @@ import android.support.annotation.RequiresApi
 import android.support.design.widget.Snackbar
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
@@ -21,12 +24,11 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import android.view.View.OnTouchListener
 import android.widget.*
+import com.google.android.gms.maps.model.*
 import kotlin.math.round
 
 
@@ -37,8 +39,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     var currentX = 0.0
     var currentY = 0.0
 
-    val psychodelaX =52.408210
+    val psychodelaX = 52.408210
     val psychodelaY = 16.935618
+
+    val paulinaX = 52.408027
+    val paulinaY = 16.9349535
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -63,6 +69,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         nav_view.setNavigationItemSelectedListener(this)
     }
 
+    private fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
+        val vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
+        vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
+        val bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth() * 2, vectorDrawable.getIntrinsicHeight() * 2, Bitmap.Config.ARGB_8888);
+        val canvas = Canvas(bitmap);
+        vectorDrawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -77,11 +92,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        /// print("hejka")
         // Add a marker in Poznan and move the camera
-        val psychodela = LatLng(psychodelaX,psychodelaY)
+
+        val paulina = LatLng(paulinaX, paulinaY)
+        mMap.addMarker(MarkerOptions()
+                .position(paulina)
+                .title("Paulina")
+                .snippet("Piąteczek")
+                .icon(bitmapDescriptorFromVector(this, R.drawable.ic_person_pin_circle_black_24dp)))
+
+
+        val psychodela = LatLng(psychodelaX, psychodelaY)
         mMap.addMarker(MarkerOptions().position(psychodela).title("Psychodela"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(psychodela,zoomLevel))
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(psychodela, zoomLevel))
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1);
 
         mMap.setMyLocationEnabled(true);
@@ -92,15 +115,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 currentX = arg0.latitude
                 currentY = arg0.longitude
 
-               // mMap.addMarker(MarkerOptions().position(LatLng(arg0.getLatitude(), arg0.getLongitude())).title("Ja"))
+                // mMap.addMarker(MarkerOptions().position(LatLng(arg0.getLatitude(), arg0.getLongitude())).title("Ja"))
             }
 
         }
         val currentLocation = mMap.myLocation
         mMap.setOnMarkerClickListener { marker ->
-          //  if (marker.title.equals("Psychodela"))
+            //  if (marker.title == "Psychodela"){
+//                print("brawo")
+//            } else{
+//                print("slabo")
+//            }
             // if marker source is clicked
-             //   Toast.makeText(this@MainActivity, marker.title, Toast.LENGTH_SHORT).show()// display toast
+            //   Toast.makeText(this@MainActivity, marker.title, Toast.LENGTH_SHORT).show()// display toast
             val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val popupView = inflater.inflate(R.layout.pub_popup, null)
 
@@ -108,25 +135,29 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             val width = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
             val height = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
             val focusable = true // lets taps outside the popup also dismiss it
-            val popupWindow = PopupWindow(popupView,width,height ,focusable)
+            val popupWindow = PopupWindow(popupView, width, height, focusable)
 
             // show the popup window
             // which view you pass in doesn't matter, it is only used for the window tolken
             popupWindow.showAtLocation(window.decorView.rootView, Gravity.BOTTOM, 0, 0)
             val distanceText = popupView.findViewById(R.id.distance) as TextView
-            val t  = CalculationByDistance(LatLng(currentX,currentY), LatLng(psychodelaX,psychodelaY))
-            distanceText.text = String.format("%.2f",t) +"km"
-            val infoButton = popupView.findViewById(R.id.info) as Button
-            infoButton.setOnClickListener {
-                val i = Intent(this,DescriptionAcitivity::class.java)
-                // i.putExtra("URL",this.baseURL)
-                startActivityForResult(i,10)
-            }
+            val t = CalculationByDistance(LatLng(currentX, currentY), LatLng(psychodelaX, psychodelaY))
+            distanceText.text = String.format("%.2f", t) + "km"
 
-            // dismiss the popup window when touched
-            popupView.setOnTouchListener { v, event ->
-                popupWindow.dismiss()
-                true
+            if (marker.title == "Psychodela") {
+                val infoButton = popupView.findViewById(R.id.info) as Button
+                infoButton.setOnClickListener {
+                    val i = Intent(this, DescriptionAcitivity::class.java)
+                    // i.putExtra("URL",this.baseURL)
+                    startActivityForResult(i, 10)
+                }
+
+
+                // dismiss the popup window when touched
+                popupView.setOnTouchListener { v, event ->
+                    popupWindow.dismiss()
+                    true
+                }
             }
 
 
