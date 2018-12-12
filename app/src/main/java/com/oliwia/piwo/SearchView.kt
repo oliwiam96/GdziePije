@@ -19,12 +19,12 @@ class SearchView : AppCompatActivity() {
             }
 
             override fun beforeTextChanged(typedText: CharSequence?, p1: Int, p2: Int, p3: Int) {
+            }
+
+            override fun onTextChanged(typedText: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 typedText?.let {
                     mockResults(it)
                 }
-            }
-
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
             }
 
         })
@@ -40,10 +40,14 @@ class SearchView : AppCompatActivity() {
         }
     }
     private fun mockResults(searchText: CharSequence){
-        when(searchText.first()){
-            'p' -> p_constraint.visibility = View.VISIBLE
-            else -> {
-                p_constraint.visibility = View.INVISIBLE
+        if(searchText.isEmpty()){
+            p_constraint.visibility = View.INVISIBLE
+        } else {
+            when(searchText.first()){
+                'p' -> p_constraint.visibility = View.VISIBLE
+                else -> {
+                    p_constraint.visibility = View.INVISIBLE
+                }
             }
         }
     }
