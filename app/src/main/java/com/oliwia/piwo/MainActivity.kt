@@ -87,7 +87,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun addListenersToLookupTextView() {
         val lookupTextView = findViewById<EditText>(lookupTextView)
-        lookupTextView.addTextChangedListener(object: TextWatcher{
+        lookupTextView.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
 
             }
@@ -164,23 +164,24 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 //            }
             // if marker source is clicked
             //   Toast.makeText(this@MainActivity, marker.title, Toast.LENGTH_SHORT).show()// display toast
-            val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            val popupView = inflater.inflate(R.layout.pub_popup, null)
-
-            // create the popup window
-            val width = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
-            val height = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
-            val focusable = true // lets taps outside the popup also dismiss it
-            val popupWindow = PopupWindow(popupView, width, height, focusable)
-
-            // show the popup window
-            // which view you pass in doesn't matter, it is only used for the window tolken
-            popupWindow.showAtLocation(window.decorView.rootView, Gravity.BOTTOM, 0, 0)
-            val distanceText = popupView.findViewById(R.id.distance) as TextView
-            val t = CalculationByDistance(LatLng(currentX, currentY), LatLng(psychodelaX, psychodelaY))
-            distanceText.text = String.format("%.2f", t) + "km"
-
             if (marker.title == "Psychodela") {
+                val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                val popupView = inflater.inflate(R.layout.pub_popup, null)
+
+                // create the popup window
+                val width = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
+                val height = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
+                val focusable = true // lets taps outside the popup also dismiss it
+                val popupWindow = PopupWindow(popupView, width, height, focusable)
+
+                // show the popup window
+                // which view you pass in doesn't matter, it is only used for the window tolken
+                popupWindow.showAtLocation(window.decorView.rootView, Gravity.BOTTOM, 0, 0)
+                val distanceText = popupView.findViewById(R.id.distance) as TextView
+                val t = CalculationByDistance(LatLng(currentX, currentY), LatLng(psychodelaX, psychodelaY))
+                distanceText.text = String.format("%.2f", t) + "km"
+
+
                 val infoButton = popupView.findViewById(R.id.info) as Button
                 infoButton.setOnClickListener {
                     val i = Intent(this, DescriptionAcitivity::class.java)
@@ -194,6 +195,30 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     popupWindow.dismiss()
                     true
                 }
+            } else{
+
+                val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                val popupView = inflater.inflate(R.layout.person_popup, null)
+
+                // create the popup window
+                val width = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
+                val height = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
+                val focusable = true // lets taps outside the popup also dismiss it
+                val popupWindow = PopupWindow(popupView, width, height, focusable)
+
+                // show the popup window
+                // which view you pass in doesn't matter, it is only used for the window tolken
+                popupWindow.showAtLocation(window.decorView.rootView, Gravity.BOTTOM, 0, 0)
+                val distanceText = popupView.findViewById(R.id.distance_person) as TextView
+                val t = CalculationByDistance(LatLng(currentX, currentY), LatLng(paulinaX, paulinaY))
+                distanceText.text = String.format("%.2f", t) + "km"
+
+                // dismiss the popup window when touched
+                popupView.setOnTouchListener { v, event ->
+                    popupWindow.dismiss()
+                    true
+                }
+
             }
 
 
@@ -246,7 +271,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         drawer_layout.closeDrawer(GravityCompat.START)
         return true
     }
-    fun openLookupActivity(enteredText: CharSequence){
+
+    fun openLookupActivity(enteredText: CharSequence) {
         val intent = Intent(this, com.oliwia.piwo.SearchView::class.java).apply {
             putExtra(LOOKUP_TEXT, enteredText)
         }
