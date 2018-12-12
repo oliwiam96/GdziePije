@@ -7,7 +7,6 @@ import android.content.Intent
 import android.icu.text.DecimalFormat
 import android.location.Location
 import android.os.Build
-import android.content.Intent
 import android.os.Bundle
 import android.support.annotation.RequiresApi
 import android.support.design.widget.Snackbar
