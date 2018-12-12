@@ -1,13 +1,17 @@
 package com.oliwia.piwo
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.icu.text.DecimalFormat
+import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.support.annotation.RequiresApi
 import android.support.design.widget.Snackbar
 import android.support.design.widget.NavigationView
+import android.support.v4.app.ActivityCompat
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
@@ -21,18 +25,20 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
-import android.widget.Toast
 import android.view.View.OnTouchListener
-import android.widget.Button
-import android.widget.PopupWindow
-import android.widget.LinearLayout
+import android.widget.*
+import kotlin.math.round
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     val zoomLevel = 16.0f
+    var currentX = 0.0
+    var currentY = 0.0
 
+    val psychodelaX =52.408210
+    val psychodelaY = 16.935618
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -66,13 +72,31 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         /// print("hejka")
         // Add a marker in Poznan and move the camera
-        val psychodela = LatLng(52.408210, 16.935618)
+        val psychodela = LatLng(psychodelaX,psychodelaY)
         mMap.addMarker(MarkerOptions().position(psychodela).title("Psychodela"))
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(psychodela,zoomLevel))
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1);
+
+        mMap.setMyLocationEnabled(true);
+
+        if (mMap != null) {
+            mMap.setOnMyLocationChangeListener { arg0 ->
+                // TODO Auto-generated method stub
+                currentX = arg0.latitude
+                currentY = arg0.longitude
+
+               // mMap.addMarker(MarkerOptions().position(LatLng(arg0.getLatitude(), arg0.getLongitude())).title("Ja"))
+            }
+
+        }
+        val currentLocation = mMap.myLocation
         mMap.setOnMarkerClickListener { marker ->
           //  if (marker.title.equals("Psychodela"))
             // if marker source is clicked
@@ -89,6 +113,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             // show the popup window
             // which view you pass in doesn't matter, it is only used for the window tolken
             popupWindow.showAtLocation(window.decorView.rootView, Gravity.BOTTOM, 0, 0)
+            val distanceText = popupView.findViewById(R.id.distance) as TextView
+            val t  = CalculationByDistance(LatLng(currentX,currentY), LatLng(psychodelaX,psychodelaY))
+            distanceText.text = String.format("%.2f",t) +"km"
             val infoButton = popupView.findViewById(R.id.info) as Button
             infoButton.setOnClickListener {
                 val i = Intent(this,DescriptionAcitivity::class.java)
