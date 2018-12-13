@@ -28,7 +28,7 @@
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.01"
-            app:layout_constraintStart_toEndOf="@+id/imageView15"
+            app:layout_constraintStart_toEndOf="@+id/PsychodelaImageView"
             app:layout_constraintTop_toTopOf="@+id/imageView16" />
 
         <ImageView
@@ -64,7 +64,7 @@
             app:srcCompat="@drawable/user" />
 
         <ImageView
-            android:id="@+id/imageView15"
+            android:id="@+id/PsychodelaImageView"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_marginStart="52dp"
@@ -74,7 +74,7 @@
             app:srcCompat="@drawable/drink" />
 
         <TextView
-            android:id="@+id/textView4"
+            android:id="@+id/PsychodelaTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
@@ -85,8 +85,8 @@
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.01"
-            app:layout_constraintStart_toEndOf="@+id/imageView15"
-            app:layout_constraintTop_toTopOf="@+id/imageView15" />
+            app:layout_constraintStart_toEndOf="@+id/PsychodelaImageView"
+            app:layout_constraintTop_toTopOf="@+id/PsychodelaImageView" />
     </android.support.constraint.ConstraintLayout>
 
 

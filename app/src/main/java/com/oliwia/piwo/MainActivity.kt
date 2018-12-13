@@ -8,7 +8,9 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.icu.text.DecimalFormat
+import android.location.Criteria
 import android.location.Location
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.support.annotation.RequiresApi
@@ -159,9 +161,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
 
         }
+        val currentLocation = mMap.myLocation
         mMap.setOnMarkerClickListener { marker ->
-              if (marker.title == "Psychodela"){
-
+            //  if (marker.title == "Psychodela"){
+//                print("brawo")
+//            } else{
+//                print("slabo")
+//            }
             // if marker source is clicked
             //   Toast.makeText(this@MainActivity, marker.title, Toast.LENGTH_SHORT).show()// display toast
             val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -170,7 +176,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             // create the popup window
             val width = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
             val height = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
-            val focusable = false // lets taps outside the popup also dismiss it
+            val focusable = true // lets taps outside the popup also dismiss it
             val popupWindow = PopupWindow(popupView, width, height, focusable)
 
             // show the popup window
@@ -210,16 +216,37 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     popupWindow.dismiss()
                     true
                 }
+            } else {
+
+                val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                val popupView = inflater.inflate(R.layout.person_popup, null)
+
+                // create the popup window
+                val width = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
+                val height = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
+                val focusable = true // lets taps outside the popup also dismiss it
+                val popupWindow = PopupWindow(popupView, width, height, focusable)
+
+                // show the popup window
+                // which view you pass in doesn't matter, it is only used for the window tolken
+                popupWindow.showAtLocation(window.decorView.rootView, Gravity.BOTTOM, 0, 0)
+                val distanceText = popupView.findViewById(R.id.distance_person) as TextView
+                val t = CalculationByDistance(LatLng(currentX, currentY), LatLng(paulinaX, paulinaY))
+                distanceText.text = String.format("%.2f", t) + "km"
+
+                // dismiss the popup window when touched
+                popupView.setOnTouchListener { v, event ->
+                    popupWindow.dismiss()
+                    true
+                }
+
             }
-            else{
-                  Toast.makeText(this@MainActivity, marker.title, Toast.LENGTH_SHORT).show()
-              }
 
 
             true
         }
 
-    }
+
 
     override fun onBackPressed() {
         if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
@@ -245,11 +272,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
 
+    @SuppressLint("MissingPermission")
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
         when (item.itemId) {
             R.id.nav_camera -> {
-                // Handle the camera action
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(psychodelaX, psychodelaY), zoomLevel))
             }
             R.id.nav_slideshow -> {
 
@@ -258,14 +286,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             }
             R.id.nav_loc -> {
-
+                val service = getSystemService(LOCATION_SERVICE) as LocationManager
+                val criteria = Criteria();
+                val  provider = service.getBestProvider (criteria, false)
+                val location = service.getLastKnownLocation(provider)
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), zoomLevel))
             }
         }
 
         drawer_layout.closeDrawer(GravityCompat.START)
         return true
     }
-    fun openLookupActivity(enteredText: CharSequence){
+
+    fun openLookupActivity(enteredText: CharSequence) {
         val intent = Intent(this, com.oliwia.piwo.SearchView::class.java).apply {
             putExtra(LOOKUP_TEXT, enteredText)
         }
