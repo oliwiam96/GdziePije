@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.icu.text.DecimalFormat
 import android.location.Location
 import android.os.Build
@@ -58,6 +59,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     val paulinaX = 52.408027
     val paulinaY = 16.9349535
+
+    lateinit var psychodelaPolyline : Polyline
+    var routeClicked = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -155,13 +159,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
 
         }
-        val currentLocation = mMap.myLocation
         mMap.setOnMarkerClickListener { marker ->
-            //  if (marker.title == "Psychodela"){
-//                print("brawo")
-//            } else{
-//                print("slabo")
-//            }
+              if (marker.title == "Psychodela"){
+
             // if marker source is clicked
             //   Toast.makeText(this@MainActivity, marker.title, Toast.LENGTH_SHORT).show()// display toast
             val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -170,7 +170,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             // create the popup window
             val width = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
             val height = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
-            val focusable = true // lets taps outside the popup also dismiss it
+            val focusable = false // lets taps outside the popup also dismiss it
             val popupWindow = PopupWindow(popupView, width, height, focusable)
 
             // show the popup window
@@ -187,14 +187,33 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     // i.putExtra("URL",this.baseURL)
                     startActivityForResult(i, 10)
                 }
+                val routeButton = popupView.findViewById(R.id.routeButton) as Button
+                routeButton.setOnClickListener {
+                    var start = LatLng(currentX, currentY)
+                    var end = LatLng(psychodelaX, psychodelaY)
+
+                    if (!routeClicked) {
+                        psychodelaPolyline = mMap.addPolyline(PolylineOptions()
+                                .add(start, end)
+                                .width(5F)
+                                .color(Color.RED))// also, constructor can get "DirectionsRendererOptions" object
+                        routeClicked = true
+                    }
+                }
+            }
 
 
                 // dismiss the popup window when touched
                 popupView.setOnTouchListener { v, event ->
+                   psychodelaPolyline.remove()
+                    routeClicked = false
                     popupWindow.dismiss()
                     true
                 }
             }
+            else{
+                  Toast.makeText(this@MainActivity, marker.title, Toast.LENGTH_SHORT).show()
+              }
 
 
             true
