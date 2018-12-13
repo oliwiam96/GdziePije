@@ -161,13 +161,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
 
         }
-        val currentLocation = mMap.myLocation
         mMap.setOnMarkerClickListener { marker ->
             //  if (marker.title == "Psychodela"){
 //                print("brawo")
 //            } else{
 //                print("slabo")
 //            }
+            if (marker.title == "Psychodela") {
             // if marker source is clicked
             //   Toast.makeText(this@MainActivity, marker.title, Toast.LENGTH_SHORT).show()// display toast
             val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -186,7 +186,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             val t = CalculationByDistance(LatLng(currentX, currentY), LatLng(psychodelaX, psychodelaY))
             distanceText.text = String.format("%.2f", t) + "km"
 
-            if (marker.title == "Psychodela") {
+
                 val infoButton = popupView.findViewById(R.id.info) as Button
                 infoButton.setOnClickListener {
                     val i = Intent(this, DescriptionAcitivity::class.java)
@@ -206,13 +206,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                         routeClicked = true
                     }
                 }
-            }
 
 
                 // dismiss the popup window when touched
                 popupView.setOnTouchListener { v, event ->
-                   psychodelaPolyline.remove()
-                    routeClicked = false
+                    if(routeClicked){
+                    psychodelaPolyline.remove()
+                    routeClicked = false}
                     popupWindow.dismiss()
                     true
                 }
@@ -245,15 +245,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             true
         }
-
+    }
 
 
     override fun onBackPressed() {
+        if(routeClicked) {
+            psychodelaPolyline.remove()
+            routeClicked = false
+        }
         if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
             drawer_layout.closeDrawer(GravityCompat.START)
         } else {
             super.onBackPressed()
         }
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -295,6 +300,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
         drawer_layout.closeDrawer(GravityCompat.START)
+        psychodelaPolyline.remove()
+        routeClicked = false
         return true
     }
 
