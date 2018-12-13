@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
@@ -20,12 +21,16 @@
     <EditText
         android:id="@+id/lookupTextView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="45dp"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginHorizontal="40dp"
         android:layout_marginTop="85dp"
+        android:background="#c838464e"
         android:hint="@string/lookup_pubs_hint_map_activity"
-        />
+        android:padding="5dp"
+        android:textColor="#ffffff"
+        android:textColorHint="#ffffff"
+        android:textColorLink="#ffffff" />
 
 </RelativeLayout>
