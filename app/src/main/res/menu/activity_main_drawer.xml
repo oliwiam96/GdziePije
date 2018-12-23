@@ -8,11 +8,22 @@
             android:id="@+id/nav_camera"
             android:icon="@drawable/ic_monetization_on_black_24dp"
             android:title="Tani Browar" />
-
         <item
             android:id="@+id/nav_loc"
             android:icon="@drawable/ic_my_location_black_24dp"
             android:title="Moja lokalizacja" />
+        <item
+            android:id="@+id/sign_in"
+            android:icon="@drawable/ic_my_location_black_24dp"
+            android:title="Zaloguj się" />
+        <item
+            android:id="@+id/sign_out"
+            android:icon="@drawable/ic_my_location_black_24dp"
+            android:title="Wyloguj się" />
+        <item
+            android:id="@+id/revoke_access"
+            android:icon="@drawable/ic_my_location_black_24dp"
+            android:title="Revoke" />
         <item
             android:id="@+id/nav_slideshow"
             android:icon="@drawable/ic_help_black_24dp"

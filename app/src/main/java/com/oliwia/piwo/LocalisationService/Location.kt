@@ -4,3 +4,8 @@ import java.util.*
 
 data class Location
     (val latitude : Float, val longitude: Float, val user : String, val timestamp : Date)
+{
+    companion object {
+        fun emptyLocation(user: String) = Location(0f, 0f, user, Date())
+    }
+}

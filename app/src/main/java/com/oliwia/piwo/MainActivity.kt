@@ -49,6 +49,15 @@ import com.oliwia.piwo.LocalisationService.FirebaseLocator
 import java.util.*
 import kotlin.math.round
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.oliwia.piwo.User.User
+
 
 const val LOOKUP_TEXT = "LOOKUP_TEXT"
 
@@ -92,10 +101,22 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-//        fab.setOnClickListener { view ->
-//            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                    .setAction("Action", null).show()
-//        }
+
+        // authentication
+        // [START config_signin]
+        // Configure Google Sign In
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+        // [END config_signin]
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+
+        // [START initialize_auth]
+        // Initialize Firebase Auth
+        auth = FirebaseAuth.getInstance()
+        // [END initialize_auth]
 
         val toggle = ActionBarDrawerToggle(
                 this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
@@ -312,10 +333,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 val location = service.getLastKnownLocation(provider)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), zoomLevel))
             }
+            R.id.sign_in -> signIn()
+            R.id.sign_out -> signOut()
+            R.id.revoke_access -> revokeAccess()
         }
 
         drawer_layout.closeDrawer(GravityCompat.START)
-        psychodelaPolyline.remove()
+        if(::psychodelaPolyline.isInitialized)
+            psychodelaPolyline.remove()
         routeClicked = false
         return true
     }
@@ -351,7 +376,106 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         return Radius * c
     }
+    // GOOGLE sign in
+    public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+        if (requestCode == RC_SIGN_IN) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                // Google Sign In was successful, authenticate with Firebase
+                val account = task.getResult(ApiException::class.java)
+                if(account == null || account.email == null)
+                    java.lang.Exception("Empty account")
+
+                currentUser = User((account?.email)!!).also {
+                    it.name = account.givenName ?: ""
+                    it.lastname = account.familyName ?: ""
+                }
+
+                firebaseAuthWithGoogle(account)
+            } catch (e: ApiException) {
+                // Google Sign In failed, update UI appropriately
+                Log.w(TAG, "Google sign in failed", e)
+
+                Toast.makeText(this.applicationContext, "Google sign in failed!", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Log.e(TAG, "Use a different account with a valid e-mail.")
+                currentUser = User.empty
+            }
+        }
+    }
+
+    private fun firebaseAuthWithGoogle(acct: GoogleSignInAccount) {
+        Log.d(TAG, "firebaseAuthWithGoogle:" + acct.id!!)
+
+        val credential = GoogleAuthProvider.getCredential(acct.idToken, null)
+        auth.signInWithCredential(credential)
+                .addOnCompleteListener(this) { task ->
+                    if (task.isSuccessful) {
+                        // Sign in success, update UI with the signed-in user's information
+                        Log.d(TAG, "signInWithCredential:success")
+                        val user = auth.currentUser
+                        Toast.makeText(this.applicationContext, "signed in!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        // If sign in fails, display a message to the user.
+                        Log.w(TAG, "signInWithCredential:failure", task.exception)
+
+                        Toast.makeText(this.applicationContext, "failed when signing in", Toast.LENGTH_SHORT).show()
+                    }
+                }
+    }
+    // [START signin]
+    private fun signIn() {
+        if(currentUser != User.empty)
+        {
+            signOut()
+        }
+        val signInIntent = googleSignInClient.signInIntent
+        startActivityForResult(signInIntent, RC_SIGN_IN)
+
+    }
+    // [END signin]
+
+    private fun signOut() {
+        if(currentUser == User.empty)
+            return
+        // Firebase sign out
+        auth.signOut()
+
+        // Google sign out
+        googleSignInClient.signOut().addOnCompleteListener(this) {
+            Toast.makeText(this.applicationContext, "signed out", Toast.LENGTH_SHORT).show()
+            currentUser = User.empty
+        }
+    }
+
+    private fun revokeAccess() {
+        // Firebase sign out
+        auth.signOut()
+
+        // Google revoke access
+        googleSignInClient.revokeAccess().addOnCompleteListener(this) {
+            Toast.makeText(this.applicationContext, "revoked access", Toast.LENGTH_SHORT).
+                    show()
+        }
+    }
+
+    private lateinit var googleSignInClient: GoogleSignInClient
+
+    // END Google sign in
 
     // firebase
+    // [START declare_auth]
+    private lateinit var auth: FirebaseAuth
+    // [END declare_auth]
     private val firebaseService = FirebaseLocator()
+
+    private var currentUser = User.empty
+
+    companion object {
+        private const val TAG = "GoogleActivity"
+        private const val RC_SIGN_IN = 9001
+    }
 }
