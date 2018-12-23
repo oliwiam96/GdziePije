@@ -3,11 +3,12 @@ package com.oliwia.piwo.LocalisationService
 import android.util.Log
 import com.google.firebase.database.*
 import com.oliwia.piwo.Firebase.FirebaseConnector
+import com.oliwia.piwo.User.User
 import java.util.*
 
 
 class FirebaseLocator : ILocalise {
-    override fun getLocalisation(user: String, callback: (Location) -> Unit) {
+    override fun getLocalisation(user: String, callback: (User, Location) -> Unit) {
         val reference = dbConnector.getReference("$locationReferenceBase/$user")
         reference.addValueEventListener(
             object : ValueEventListener {
@@ -17,7 +18,7 @@ class FirebaseLocator : ILocalise {
 
                 override fun onDataChange(p0: DataSnapshot) {
                     Log.i(loggerTag, "Data has been changed: $p0")
-                    callback.invoke(Location(1f, 2f, user, Date()))
+                    callback.invoke(User(user), Location(0.0, 0.0, Date()))
                 }
             }
         )
@@ -34,4 +35,10 @@ class FirebaseLocator : ILocalise {
 
     private val locationReferenceBase = "users-location"
     private val loggerTag = "FirebaseLocator"
+
+    companion object {
+        private fun removeMailFromUser(user: String) = user.split("@").first()
+        fun removeForbiddenCharactersFromEmail(email: String) : String =
+                removeMailFromUser(email).replace(Regex("""[. [ # $ ] ]"""), "_")
+    }
 }

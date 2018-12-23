@@ -1,11 +1,13 @@
 package com.oliwia.piwo.LocalisationService
 
+import com.oliwia.piwo.User.User
+import java.io.Serializable
 import java.util.*
 
 data class Location
-    (val latitude : Float, val longitude: Float, val user : String, val timestamp : Date)
+    (val latitude : Double, val longitude: Double, val timestamp : Date) : Serializable
 {
     companion object {
-        fun emptyLocation(user: String) = Location(0f, 0f, user, Date())
+        fun emptyLocation(user: String) = Location(0.0, 0.0, Date())
     }
 }

@@ -9,12 +9,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.icu.text.DecimalFormat
 import android.location.Criteria
-import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.support.annotation.RequiresApi
-import android.support.design.widget.Snackbar
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -27,9 +25,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.EditText
-import android.widget.SearchView
 import android.widget.TextView
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -38,16 +34,11 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.oliwia.piwo.R.id.lookupTextView
-import com.oliwia.piwo.R.id.nav_view
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
-import android.view.View.OnTouchListener
 import android.widget.*
 import com.google.android.gms.maps.model.*
-import com.oliwia.piwo.Firebase.FirebaseConnector
 import com.oliwia.piwo.LocalisationService.FirebaseLocator
-import java.util.*
-import kotlin.math.round
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -56,6 +47,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.oliwia.piwo.DataStorage.BinaryStorageManager
+import com.oliwia.piwo.LocalisationService.GPSManager
+import com.oliwia.piwo.LocalisationService.Location
 import com.oliwia.piwo.User.User
 
 
@@ -80,14 +74,17 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onStart() {
         super.onStart()
 
+        gpsManager = GPSManager(::newUserPosition)
+
         // firebase
-
-        firebaseService.getLocalisation("jan") {
-            Log.i("MainActivity", "New position has been received $it")
+        signInSuccessCallback = { _ ->
+            Log.i(TAG, "Staring gps manager after successful sign in")
+            gpsManager.getPosition(this)
         }
+    }
 
-        firebaseService.putLocalisation("jan", com.oliwia.piwo.LocalisationService.Location(2f, 3f, "jan", Date()))
-
+    fun newUserPosition(location: Location){
+        currentUser.updateLocation(location, firebaseService, {user -> Log.i(TAG, "Updated position of ${user.username}")})
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -389,11 +386,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 if(account == null || account.email == null)
                     java.lang.Exception("Empty account")
 
-                currentUser = User((account?.email)!!).also {
-                    it.name = account.givenName ?: ""
-                    it.lastname = account.familyName ?: ""
-                }
-
+                val validatedEmail = FirebaseLocator.removeForbiddenCharactersFromEmail((account?.email)!!)
+                setCurrentUser( User(validatedEmail) )
+                Log.i(TAG, "Google sign in success, user ${currentUser.username}")
                 firebaseAuthWithGoogle(account)
             } catch (e: ApiException) {
                 // Google Sign In failed, update UI appropriately
@@ -428,13 +423,29 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
     // [START signin]
     private fun signIn() {
-        if(currentUser != User.empty)
-        {
-            signOut()
-        }
-        val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_SIGN_IN)
+        Log.i(TAG, "Application start, user $currentUser")
+        val tempUser = userSerializer.load(userFilename) ?: User.empty
 
+        if(currentUser == User.empty)
+        {
+            if(tempUser == User.empty) {
+                val signInIntent = googleSignInClient.signInIntent
+                startActivityForResult(signInIntent, RC_SIGN_IN)
+            } else {
+                setCurrentUser(tempUser)
+            }
+        }
+
+    }
+
+    private fun setCurrentUser(user: User){
+        currentUser = user
+        userSerializer.save(currentUser, userFilename)
+        if(currentUser!= User.empty){
+            // invoke callback
+            if(::signInSuccessCallback.isInitialized)
+                signInSuccessCallback.invoke(currentUser)
+        }
     }
     // [END signin]
 
@@ -447,7 +458,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         // Google sign out
         googleSignInClient.signOut().addOnCompleteListener(this) {
             Toast.makeText(this.applicationContext, "signed out", Toast.LENGTH_SHORT).show()
-            currentUser = User.empty
+            setCurrentUser(User.empty)
         }
     }
 
@@ -473,6 +484,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private val firebaseService = FirebaseLocator()
 
     private var currentUser = User.empty
+
+    private val userFilename = "user_data.dat"
+    private val userSerializer : BinaryStorageManager<User> by lazy{
+        BinaryStorageManager<User>(applicationContext)
+    }
+    private lateinit var signInSuccessCallback : (User) -> Unit
+    private lateinit var gpsManager: GPSManager
 
     companion object {
         private const val TAG = "GoogleActivity"
