@@ -44,6 +44,9 @@ import kotlinx.android.synthetic.main.app_bar_main.*
 import android.view.View.OnTouchListener
 import android.widget.*
 import com.google.android.gms.maps.model.*
+import com.oliwia.piwo.Firebase.FirebaseConnector
+import com.oliwia.piwo.LocalisationService.FirebaseLocator
+import java.util.*
 import kotlin.math.round
 
 
@@ -64,6 +67,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     lateinit var psychodelaPolyline : Polyline
     var routeClicked = false
+
+    override fun onStart() {
+        super.onStart()
+
+        // firebase
+
+        firebaseService.getLocalisation("jan") {
+            Log.i("MainActivity", "New position has been received $it")
+        }
+
+        firebaseService.putLocalisation("jan", com.oliwia.piwo.LocalisationService.Location(2f, 3f, "jan", Date()))
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -335,4 +351,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         return Radius * c
     }
+
+    // firebase
+    private val firebaseService = FirebaseLocator()
 }
