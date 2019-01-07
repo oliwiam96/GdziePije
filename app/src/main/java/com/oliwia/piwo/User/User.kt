@@ -12,7 +12,10 @@ open class User(val username: String) : Serializable {
         callback.invoke(this)
     }
     val friends = hashSetOf<String>()
-    private var location = Location.emptyLocation(username)
+    var location = Location.emptyLocation(username)
+        private set(value) {
+            field = value
+        }
 
 //    override fun equals(other: Any?): Boolean =
 //        when(other){

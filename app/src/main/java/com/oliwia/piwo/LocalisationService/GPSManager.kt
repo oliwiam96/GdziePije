@@ -7,21 +7,23 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import com.oliwia.piwo.MainActivity
+import com.oliwia.piwo.Permissions.PermissionsGuard
 import java.util.*
 
-class GPSManager(val newPositionCallback: (Location) -> Unit) {
+class GPSManager(val newPositionCallback: (Location) -> Unit, private val permissionGuard: PermissionsGuard) {
     @SuppressLint("MissingPermission")
     fun getPosition(mapsActivity: MainActivity) {
-        // Acquire a reference to the system Location Manager
-        val locationManager = mapsActivity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        if(!permissionGuard.arePermissionsGranted(android.Manifest.permission.ACCESS_FINE_LOCATION))
+        {
+            return
+        }
 
-        // Define a listener that responds to location updates
+        val locationManager = mapsActivity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val locationListener = object : LocationListener {
             override fun onLocationChanged(location: android.location.Location?) {
-
                 location?.let {
-                    Log.i("FirebaseLocator", "Changed position")
-                    newPositionCallback(Location(it.longitude, it.latitude, Date()))
+                    Log.i(TAG, "Changed position $location")
+                    newPositionCallback(Location(it.latitude, it.longitude, Date()))
                 }
             }
 
@@ -37,6 +39,8 @@ class GPSManager(val newPositionCallback: (Location) -> Unit) {
 
         locationManager.requestLocationUpdates(locationProvider, 10000, 50f, locationListener)
     }
+
+    val TAG = "GPSManager"
 
     companion object {
         const val locationProvider = LocationManager.GPS_PROVIDER

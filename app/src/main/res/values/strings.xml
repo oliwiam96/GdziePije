@@ -7,4 +7,6 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_maps">Map</string>
     <string name="lookup_pubs_hint_map_activity">Szukaj pubów, osób...</string>
+
+    <string name="permission_location_not_granted">Pozwolenia na lokalizacje niedostępne, niektóre opcje są niedostępne</string>
 </resources>

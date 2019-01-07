@@ -50,18 +50,18 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.oliwia.piwo.DataStorage.BinaryStorageManager
 import com.oliwia.piwo.LocalisationService.GPSManager
 import com.oliwia.piwo.LocalisationService.Location
+import com.oliwia.piwo.Permissions.PermissionsGuard
 import com.oliwia.piwo.User.User
 
 
 const val LOOKUP_TEXT = "LOOKUP_TEXT"
 
-class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+    val permissionsGuard = PermissionsGuard(this, ::onPermissionGranted)
+    val notificationManager = ToastNotificator(this)
+    val mapsHandler = MapsHandler(::onMapReady)
 
-    private lateinit var mMap: GoogleMap
-    val zoomLevel = 16.0f
-    var currentX = 0.0
-    var currentY = 0.0
-
+    val zoomLevel = 10.0f
     val psychodelaX = 52.408210
     val psychodelaY = 16.935618
 
@@ -71,49 +71,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     lateinit var psychodelaPolyline : Polyline
     var routeClicked = false
 
-    override fun onStart() {
-        super.onStart()
-
-        gpsManager = GPSManager(::newUserPosition)
-
-        // firebase
-        signInSuccessCallback = { _ ->
-            Log.i(TAG, "Staring gps manager after successful sign in")
-            gpsManager.getPosition(this)
-        }
-    }
-
-    fun newUserPosition(location: Location){
-        currentUser.updateLocation(location, firebaseService, {user -> Log.i(TAG, "Updated position of ${user.username}")})
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_main)
-
         setSupportActionBar(toolbar)
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-                .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
 
-
-        // authentication
-        // [START config_signin]
-        // Configure Google Sign In
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build()
-        // [END config_signin]
-
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
-
-        // [START initialize_auth]
-        // Initialize Firebase Auth
-        auth = FirebaseAuth.getInstance()
-        // [END initialize_auth]
+        gpsManager = GPSManager(::newUserPosition, permissionsGuard)
+        // firebase
+        signInSuccessCallback = { _ ->
+            Log.i(TAG, "Sign in successfully")
+        }
 
         val toggle = ActionBarDrawerToggle(
                 this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
@@ -123,6 +90,54 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         nav_view.setNavigationItemSelectedListener(this)
 
         addListenersToLookupTextView()
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        if(permissionsGuard.arePermissionsGranted(Manifest.permission.ACCESS_FINE_LOCATION))
+        {
+            Log.i(TAG, "Location permission granted")
+            onPermissionGranted(PermissionsGuard.LOCATION_PERMISSION_REQUEST_CODE)
+        } else {
+            Log.i(TAG, "Location permission not granted")
+            permissionsGuard.acquirePermissions()
+        }
+        // authentication
+        // Configure Google Sign In
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+        signIn()
+
+        // Initialize Firebase Auth
+        auth = FirebaseAuth.getInstance()
+    }
+
+    private fun newUserPosition(location: Location){
+        Log.i(TAG, "Updating position to $location")
+        mapsHandler.moveCameraOnPosition(location.toLatLng(), zoomLevel)
+        currentUser.updateLocation(location, firebaseService) { user -> Log.i(TAG, "Updated position of ${user.username}")}
+    }
+
+    private fun onPermissionGranted(requestCode: Int)
+    {
+        Log.i(TAG, "Permission granted for $requestCode")
+        when(requestCode)
+        {
+            PermissionsGuard.LOCATION_PERMISSION_REQUEST_CODE ->
+            {
+                // try to get get position from gps (inside this method we check whether we have permission)
+                gpsManager.getPosition(this)
+
+                val mapFragment = supportFragmentManager
+                        .findFragmentById(R.id.map) as SupportMapFragment
+                mapFragment.getMapAsync(mapsHandler)
+            }
+        }
     }
 
     private fun addListenersToLookupTextView() {
@@ -145,12 +160,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     private fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
-        val vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
-        vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
-        val bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth() * 2, vectorDrawable.getIntrinsicHeight() * 2, Bitmap.Config.ARGB_8888);
-        val canvas = Canvas(bitmap);
-        vectorDrawable.draw(canvas);
-        return BitmapDescriptorFactory.fromBitmap(bitmap);
+        val vectorDrawable = ContextCompat.getDrawable(context, vectorResId)
+        vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight())
+        val bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth() * 2, vectorDrawable.getIntrinsicHeight() * 2, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        vectorDrawable.draw(canvas)
+        return BitmapDescriptorFactory.fromBitmap(bitmap)
     }
 
     /**
@@ -163,14 +178,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
      * installed Google Play services and returned to the app.
      */
 
-    @RequiresApi(Build.VERSION_CODES.N)
-    @SuppressLint("MissingPermission")
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-        // Add a marker in Poznan and move the camera
-
+    private fun onMapReady() {
         val paulina = LatLng(paulinaX, paulinaY)
-        mMap.addMarker(MarkerOptions()
+        mapsHandler.addMarker(MarkerOptions()
                 .position(paulina)
                 .title("Paulina")
                 .snippet("Piąteczek")
@@ -178,46 +188,27 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 
         val psychodela = LatLng(psychodelaX, psychodelaY)
-        mMap.addMarker(MarkerOptions().position(psychodela).title("Psychodela"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(psychodela, zoomLevel))
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1);
+        mapsHandler.addMarker(MarkerOptions().position(psychodela).title("Psychodela"))
+        mapsHandler.moveCameraOnPosition(psychodela, zoomLevel)
 
-        mMap.setMyLocationEnabled(true);
+        mapsHandler.setOnMarkerClickListener { marker ->
 
-        if (mMap != null) {
-            mMap.setOnMyLocationChangeListener { arg0 ->
-                // TODO Auto-generated method stub
-                currentX = arg0.latitude
-                currentY = arg0.longitude
-
-                // mMap.addMarker(MarkerOptions().position(LatLng(arg0.getLatitude(), arg0.getLongitude())).title("Ja"))
-            }
-
-        }
-        mMap.setOnMarkerClickListener { marker ->
-            //  if (marker.title == "Psychodela"){
-//                print("brawo")
-//            } else{
-//                print("slabo")
-//            }
             if (marker.title == "Psychodela") {
-            // if marker source is clicked
-            //   Toast.makeText(this@MainActivity, marker.title, Toast.LENGTH_SHORT).show()// display toast
-            val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            val popupView = inflater.inflate(R.layout.pub_popup, null)
+                val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                val popupView = inflater.inflate(R.layout.pub_popup, null)
 
-            // create the popup window
-            val width = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
-            val height = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
-            val focusable = true // lets taps outside the popup also dismiss it
-            val popupWindow = PopupWindow(popupView, width, height, focusable)
+                // create the popup window
+                val width = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
+                val height = (LinearLayout.LayoutParams.WRAP_CONTENT).toInt()
+                val focusable = true // lets taps outside the popup also dismiss it
+                val popupWindow = PopupWindow(popupView, width, height, focusable)
 
-            // show the popup window
-            // which view you pass in doesn't matter, it is only used for the window tolken
-            popupWindow.showAtLocation(window.decorView.rootView, Gravity.BOTTOM, 0, 0)
-            val distanceText = popupView.findViewById(R.id.distance) as TextView
-            val t = CalculationByDistance(LatLng(currentX, currentY), LatLng(psychodelaX, psychodelaY))
-            distanceText.text = String.format("%.2f", t) + "km"
+                // show the popup window
+                // which view you pass in doesn't matter, it is only used for the window tolken
+                popupWindow.showAtLocation(window.decorView.rootView, Gravity.BOTTOM, 0, 0)
+                val distanceText = popupView.findViewById(R.id.distance) as TextView
+                val t = CalculationByDistance(currentUser.location.toLatLng(), LatLng(psychodelaX, psychodelaY))
+                distanceText.text = String.format("%.2f", t) + "km"
 
 
                 val infoButton = popupView.findViewById(R.id.info) as Button
@@ -228,20 +219,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 }
                 val routeButton = popupView.findViewById(R.id.routeButton) as Button
                 routeButton.setOnClickListener {
-                    var start = LatLng(currentX, currentY)
-                    var end = LatLng(psychodelaX, psychodelaY)
+                    val start = currentUser.location.toLatLng()
+                    val end = LatLng(psychodelaX, psychodelaY)
 
                     if (!routeClicked) {
-                        psychodelaPolyline = mMap.addPolyline(PolylineOptions()
+                        psychodelaPolyline = mapsHandler.addPolyline(PolylineOptions()
                                 .add(start, end)
                                 .width(5F)
-                                .color(Color.RED))// also, constructor can get "DirectionsRendererOptions" object
+                                .color(Color.RED))
                         routeClicked = true
                     }
                 }
 
 
-                // dismiss the popup window when touched
+                    // dismiss the popup window when touched
                 popupView.setOnTouchListener { v, event ->
                     if(routeClicked){
                     psychodelaPolyline.remove()
@@ -264,7 +255,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 // which view you pass in doesn't matter, it is only used for the window tolken
                 popupWindow.showAtLocation(window.decorView.rootView, Gravity.BOTTOM, 0, 0)
                 val distanceText = popupView.findViewById(R.id.distance_person) as TextView
-                val t = CalculationByDistance(LatLng(currentX, currentY), LatLng(paulinaX, paulinaY))
+                val t = CalculationByDistance(currentUser.location.toLatLng(), LatLng(paulinaX, paulinaY))
                 distanceText.text = String.format("%.2f", t) + "km"
 
                 // dismiss the popup window when touched
@@ -274,8 +265,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 }
 
             }
-
-
             true
         }
     }
@@ -310,12 +299,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
 
-    @SuppressLint("MissingPermission")
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
         when (item.itemId) {
             R.id.nav_camera -> {
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(psychodelaX, psychodelaY), zoomLevel))
+                mapsHandler.moveCameraOnPosition(LatLng(psychodelaX, psychodelaY), zoomLevel)
             }
             R.id.nav_slideshow -> {
 
@@ -324,11 +312,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             }
             R.id.nav_loc -> {
-                val service = getSystemService(LOCATION_SERVICE) as LocationManager
-                val criteria = Criteria();
-                val  provider = service.getBestProvider (criteria, false)
-                val location = service.getLastKnownLocation(provider)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), zoomLevel))
+                mapsHandler.moveCameraOnPosition(currentUser.location.toLatLng(), zoomLevel)
             }
             R.id.sign_in -> signIn()
             R.id.sign_out -> signOut()
@@ -493,7 +477,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var gpsManager: GPSManager
 
     companion object {
-        private const val TAG = "GoogleActivity"
+        const val TAG = "GdziePijeMainActivity"
         private const val RC_SIGN_IN = 9001
     }
 }
