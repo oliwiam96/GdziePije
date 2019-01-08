@@ -316,7 +316,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
             R.id.sign_in -> signIn()
             R.id.sign_out -> signOut()
-            R.id.revoke_access -> revokeAccess()
         }
 
         drawer_layout.closeDrawer(GravityCompat.START)

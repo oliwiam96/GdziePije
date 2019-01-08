@@ -13,18 +13,6 @@
             android:icon="@drawable/ic_my_location_black_24dp"
             android:title="Moja lokalizacja" />
         <item
-            android:id="@+id/sign_in"
-            android:icon="@drawable/ic_my_location_black_24dp"
-            android:title="Zaloguj się" />
-        <item
-            android:id="@+id/sign_out"
-            android:icon="@drawable/ic_my_location_black_24dp"
-            android:title="Wyloguj się" />
-        <item
-            android:id="@+id/revoke_access"
-            android:icon="@drawable/ic_my_location_black_24dp"
-            android:title="Revoke" />
-        <item
             android:id="@+id/nav_slideshow"
             android:icon="@drawable/ic_help_black_24dp"
             android:title="Pomoc" />
@@ -32,6 +20,14 @@
         android:id="@+id/nav_manage"
         android:icon="@drawable/ic_menu_manage"
         android:title="Ustawienia" />
+        <item
+            android:id="@+id/sign_in"
+            android:icon="@drawable/ic_my_location_black_24dp"
+            android:title="Zaloguj się" />
+        <item
+            android:id="@+id/sign_out"
+            android:icon="@drawable/ic_my_location_black_24dp"
+            android:title="Wyloguj się" />
     </group>
 
 </menu>
