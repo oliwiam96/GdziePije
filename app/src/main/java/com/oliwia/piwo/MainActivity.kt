@@ -312,7 +312,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             }
             R.id.nav_loc -> {
-                mapsHandler.moveCameraOnPosition(currentUser.location.toLatLng(), zoomLevel)
+                if(currentUser != User.empty)
+                    mapsHandler.moveCameraOnPosition(currentUser.location.toLatLng(), zoomLevel)
             }
             R.id.sign_in -> signIn()
             R.id.sign_out -> signOut()
