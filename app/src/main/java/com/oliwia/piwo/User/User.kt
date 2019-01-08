@@ -17,17 +17,17 @@ open class User(val username: String) : Serializable {
             field = value
         }
 
-//    override fun equals(other: Any?): Boolean =
-//        when(other){
-//            is User -> {
-//                other.username == username && other.name == name && other.lastname == lastname
-//            }
-//            else -> false
-//        }
-//
-//    override fun hashCode(): Int = username.hashCode() * 13 + name.hashCode() * 19 + lastname.hashCode() * 23
-//
-//    override fun toString(): String = "User $username, name: $name, lastname: $lastname"
+    override fun equals(other: Any?): Boolean =
+        when(other){
+            is User -> {
+                other.username == username
+            }
+            else -> false
+        }
+
+    override fun hashCode(): Int = username.hashCode() * 13
+
+    override fun toString(): String = "User $username, location: $location"
 
     companion object {
         val empty = User("")
