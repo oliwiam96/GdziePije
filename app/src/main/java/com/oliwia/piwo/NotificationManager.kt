@@ -8,7 +8,7 @@ abstract class NotificationManager(val context: Context) : INotificationDisplay
 class ToastNotificator(context: Context) : NotificationManager(context)
 {
     override fun displayNotification(message: String, duration: Int) {
-        Toast.makeText(context, message, duration)
+        Toast.makeText(context, message, duration).show()
     }
 }
 

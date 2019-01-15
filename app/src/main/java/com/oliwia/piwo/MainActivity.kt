@@ -310,10 +310,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
             R.id.nav_manage -> {
 
+
             }
             R.id.nav_loc -> {
                 if(currentUser != User.empty)
                     mapsHandler.moveCameraOnPosition(currentUser.location.toLatLng(), zoomLevel)
+            }
+            R.id.friends -> {
+                notificationManager.displayNotification("I'll be there for you!", 200)
             }
             R.id.sign_in -> signIn()
             R.id.sign_out -> signOut()

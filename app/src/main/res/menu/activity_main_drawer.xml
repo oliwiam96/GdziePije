@@ -20,6 +20,12 @@
         android:id="@+id/nav_manage"
         android:icon="@drawable/ic_menu_manage"
         android:title="Ustawienia" />
+
+        <item
+            android:id="@+id/friends"
+            android:icon="@drawable/ic_people_black_24dp"
+            android:title="Znajomi" />
+
         <item
             android:id="@+id/sign_in"
             android:icon="@drawable/ic_my_location_black_24dp"
@@ -28,6 +34,7 @@
             android:id="@+id/sign_out"
             android:icon="@drawable/ic_my_location_black_24dp"
             android:title="Wyloguj się" />
+
     </group>
 
 </menu>
