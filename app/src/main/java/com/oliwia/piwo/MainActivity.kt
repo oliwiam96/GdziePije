@@ -2,6 +2,7 @@ package com.oliwia.piwo
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -55,21 +56,26 @@ import com.oliwia.piwo.User.User
 
 
 const val LOOKUP_TEXT = "LOOKUP_TEXT"
+val REQUEST_CODE_FRIENDS = 10000
+val EXTRA_FRIENDS = "FRIENDS"
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     val permissionsGuard = PermissionsGuard(this, ::onPermissionGranted)
     val notificationManager = ToastNotificator(this)
     val mapsHandler = MapsHandler(::onMapReady)
 
-    val zoomLevel = 10.0f
+    val zoomLevel = 14.0f
     val psychodelaX = 52.408210
     val psychodelaY = 16.935618
 
     val paulinaX = 52.408027
     val paulinaY = 16.9349535
 
-    lateinit var psychodelaPolyline : Polyline
+    lateinit var psychodelaPolyline: Polyline
     var routeClicked = false
+    var friends: ArrayList<User> = arrayListOf<User>(User("Jakub Tomczak", 1), User("Konrad Kubzdela", 2), User("Oliwia Masian", 3),
+            User("Roman Niemczyk", 4), User("Filip Błaszczyk", 5), User("Jacek Matczyński", 6),
+            User("Kuba Berezowski", 7), User("Mateusz Kudła", 8), User("Szymon Lewek", 9))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,8 +101,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onStart() {
         super.onStart()
 
-        if(permissionsGuard.arePermissionsGranted(Manifest.permission.ACCESS_FINE_LOCATION))
-        {
+        if (permissionsGuard.arePermissionsGranted(Manifest.permission.ACCESS_FINE_LOCATION)) {
             Log.i(TAG, "Location permission granted")
             onPermissionGranted(PermissionsGuard.LOCATION_PERMISSION_REQUEST_CODE)
         } else {
@@ -117,19 +122,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         auth = FirebaseAuth.getInstance()
     }
 
-    private fun newUserPosition(location: Location){
+    private fun newUserPosition(location: Location) {
         Log.i(TAG, "Updating position to $location")
         mapsHandler.moveCameraOnPosition(location.toLatLng(), zoomLevel)
-        currentUser.updateLocation(location, firebaseService) { user -> Log.i(TAG, "Updated position of ${user.username}")}
+        currentUser.updateLocation(location, firebaseService) { user -> Log.i(TAG, "Updated position of ${user.username}") }
     }
 
-    private fun onPermissionGranted(requestCode: Int)
-    {
+    private fun onPermissionGranted(requestCode: Int) {
         Log.i(TAG, "Permission granted for $requestCode")
-        when(requestCode)
-        {
-            PermissionsGuard.LOCATION_PERMISSION_REQUEST_CODE ->
-            {
+        when (requestCode) {
+            PermissionsGuard.LOCATION_PERMISSION_REQUEST_CODE -> {
                 // try to get get position from gps (inside this method we check whether we have permission)
                 gpsManager.getPosition(this)
 
@@ -142,7 +144,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun addListenersToLookupTextView() {
         val lookupTextView = findViewById<EditText>(lookupTextView)
-        lookupTextView.addTextChangedListener(object: TextWatcher{
+        lookupTextView.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
 
             }
@@ -183,13 +185,24 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         mapsHandler.addMarker(MarkerOptions()
                 .position(paulina)
                 .title("Paulina")
-                .snippet("Piąteczek")
-                .icon(bitmapDescriptorFromVector(this, R.drawable.ic_person_pin_circle_black_24dp)))
+                .icon(BitmapDescriptorFactory
+                        .defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+        //.icon(bitmapDescriptorFromVector(this, R.drawable.ic_person_pin_circle_black_24dp)))
 
 
         val psychodela = LatLng(psychodelaX, psychodelaY)
         mapsHandler.addMarker(MarkerOptions().position(psychodela).title("Psychodela"))
         mapsHandler.moveCameraOnPosition(psychodela, zoomLevel)
+
+        for (user in friends) {
+            val position = LatLng(paulinaX - 0.015 + Math.random() * 0.03,
+                    paulinaY - 0.015 + Math.random() * 0.03)
+            mapsHandler.addMarker(MarkerOptions()
+                    .position(position)
+                    .title(user.username)
+                    .icon(BitmapDescriptorFactory
+                            .defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+        }
 
         mapsHandler.setOnMarkerClickListener { marker ->
 
@@ -232,11 +245,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 }
 
 
-                    // dismiss the popup window when touched
+                // dismiss the popup window when touched
                 popupView.setOnTouchListener { v, event ->
-                    if(routeClicked){
-                    psychodelaPolyline.remove()
-                    routeClicked = false}
+                    if (routeClicked) {
+                        psychodelaPolyline.remove()
+                        routeClicked = false
+                    }
                     popupWindow.dismiss()
                     true
                 }
@@ -254,6 +268,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 // show the popup window
                 // which view you pass in doesn't matter, it is only used for the window tolken
                 popupWindow.showAtLocation(window.decorView.rootView, Gravity.BOTTOM, 0, 0)
+
+                val nameText = popupView.findViewById(R.id.name_person) as TextView
+                nameText.text = marker.title
+
                 val distanceText = popupView.findViewById(R.id.distance_person) as TextView
                 val t = CalculationByDistance(currentUser.location.toLatLng(), LatLng(paulinaX, paulinaY))
                 distanceText.text = String.format("%.2f", t) + "km"
@@ -271,7 +289,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 
     override fun onBackPressed() {
-        if(routeClicked) {
+        if (routeClicked) {
             psychodelaPolyline.remove()
             routeClicked = false
         }
@@ -313,7 +331,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             }
             R.id.nav_loc -> {
-                if(currentUser != User.empty)
+                if (currentUser != User.empty)
                     mapsHandler.moveCameraOnPosition(currentUser.location.toLatLng(), zoomLevel)
             }
             R.id.friends -> {
@@ -325,7 +343,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
         drawer_layout.closeDrawer(GravityCompat.START)
-        if(::psychodelaPolyline.isInitialized)
+        if (::psychodelaPolyline.isInitialized)
             psychodelaPolyline.remove()
         routeClicked = false
         return true
@@ -338,9 +356,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         startActivity(intent)
     }
 
-    fun openFriendsActivity(){
-        val intent = Intent(this, com.oliwia.piwo.FriendsActivity::class.java)
-        startActivity(intent)
+    fun openFriendsActivity() {
+        val intent = Intent(this, com.oliwia.piwo.FriendsActivity::class.java).apply {
+            putExtra(EXTRA_FRIENDS, friends)
+        }
+        startActivityForResult(intent, REQUEST_CODE_FRIENDS)
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -367,6 +387,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         return Radius * c
     }
+
     // GOOGLE sign in
     public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -377,11 +398,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             try {
                 // Google Sign In was successful, authenticate with Firebase
                 val account = task.getResult(ApiException::class.java)
-                if(account == null || account.email == null)
+                if (account == null || account.email == null)
                     java.lang.Exception("Empty account")
 
                 val validatedEmail = FirebaseLocator.removeForbiddenCharactersFromEmail((account?.email)!!)
-                setCurrentUser( User(validatedEmail, 0) )
+                setCurrentUser(User(validatedEmail, 0))
                 Log.i(TAG, "Google sign in success, user ${currentUser.username}")
                 firebaseAuthWithGoogle(account)
             } catch (e: ApiException) {
@@ -393,6 +414,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 Log.e(TAG, "Use a different account with a valid e-mail.")
                 currentUser = User.empty
             }
+        } else if (requestCode == REQUEST_CODE_FRIENDS && resultCode == Activity.RESULT_OK && data != null) {
+            val friendId = data.extras.getString("ID").toString()
+            notificationManager.displayNotification(friendId, 200)
         }
     }
 
@@ -415,14 +439,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     }
                 }
     }
+
     // [START signin]
     private fun signIn() {
         Log.i(TAG, "Application start, user $currentUser")
         val tempUser = userSerializer.load(userFilename) ?: User.empty
 
-        if(currentUser == User.empty)
-        {
-            if(tempUser == User.empty) {
+        if (currentUser == User.empty) {
+            if (tempUser == User.empty) {
                 val signInIntent = googleSignInClient.signInIntent
                 startActivityForResult(signInIntent, RC_SIGN_IN)
             } else {
@@ -432,19 +456,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     }
 
-    private fun setCurrentUser(user: User){
+    private fun setCurrentUser(user: User) {
         currentUser = user
         userSerializer.save(currentUser, userFilename)
-        if(currentUser!= User.empty){
+        if (currentUser != User.empty) {
             // invoke callback
-            if(::signInSuccessCallback.isInitialized)
+            if (::signInSuccessCallback.isInitialized)
                 signInSuccessCallback.invoke(currentUser)
         }
     }
     // [END signin]
 
     private fun signOut() {
-        if(currentUser == User.empty)
+        if (currentUser == User.empty)
             return
         // Firebase sign out
         auth.signOut()
@@ -480,10 +504,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private var currentUser = User.empty
 
     private val userFilename = "user_data.dat"
-    private val userSerializer : BinaryStorageManager<User> by lazy{
+    private val userSerializer: BinaryStorageManager<User> by lazy {
         BinaryStorageManager<User>(applicationContext)
     }
-    private lateinit var signInSuccessCallback : (User) -> Unit
+    private lateinit var signInSuccessCallback: (User) -> Unit
     private lateinit var gpsManager: GPSManager
 
     companion object {
