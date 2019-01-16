@@ -29,7 +29,7 @@ class FriendsActivity : AppCompatActivity() {
         lView.setOnItemClickListener { adapterView, view, position, id ->
             run {
                 val data = Intent()
-                data.putExtra(FRIENDS_ID, id.toString())
+                data.putExtra(FRIENDS_ID, position.toString())
                 setResult(Activity.RESULT_OK, data)
                 super.finish()
             }

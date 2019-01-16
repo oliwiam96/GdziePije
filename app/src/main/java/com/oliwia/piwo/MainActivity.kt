@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     val notificationManager = ToastNotificator(this)
     val mapsHandler = MapsHandler(::onMapReady)
 
-    val zoomLevel = 14.0f
+    val zoomLevel = 15.0f
     val psychodelaX = 52.408210
     val psychodelaY = 16.935618
 
@@ -76,6 +76,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     var friends: ArrayList<User> = arrayListOf<User>(User("Jakub Tomczak", 1), User("Konrad Kubzdela", 2), User("Oliwia Masian", 3),
             User("Roman Niemczyk", 4), User("Filip Błaszczyk", 5), User("Jacek Matczyński", 6),
             User("Kuba Berezowski", 7), User("Mateusz Kudła", 8), User("Szymon Lewek", 9))
+
+    var friendsPosition: ArrayList<LatLng> = arrayListOf<LatLng>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -197,6 +199,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         for (user in friends) {
             val position = LatLng(paulinaX - 0.015 + Math.random() * 0.03,
                     paulinaY - 0.015 + Math.random() * 0.03)
+            friendsPosition.add(position)
+
             mapsHandler.addMarker(MarkerOptions()
                     .position(position)
                     .title(user.username)
@@ -415,8 +419,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 currentUser = User.empty
             }
         } else if (requestCode == REQUEST_CODE_FRIENDS && resultCode == Activity.RESULT_OK && data != null) {
-            val friendId = data.extras.getString("ID").toString()
-            notificationManager.displayNotification(friendId, 200)
+            val friendIndex = data.extras.getString("ID").toInt()
+            mapsHandler.moveCameraOnPosition(friendsPosition[friendIndex], zoomLevel)
         }
     }
 
