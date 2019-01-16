@@ -317,7 +317,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     mapsHandler.moveCameraOnPosition(currentUser.location.toLatLng(), zoomLevel)
             }
             R.id.friends -> {
-                notificationManager.displayNotification("I'll be there for you!", 200)
+                // notificationManager.displayNotification("I'll be there for you!", 200)
+                openFriendsActivity()
             }
             R.id.sign_in -> signIn()
             R.id.sign_out -> signOut()
@@ -334,6 +335,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val intent = Intent(this, com.oliwia.piwo.SearchView::class.java).apply {
             putExtra(LOOKUP_TEXT, enteredText)
         }
+        startActivity(intent)
+    }
+
+    fun openFriendsActivity(){
+        val intent = Intent(this, com.oliwia.piwo.FriendsActivity::class.java)
         startActivity(intent)
     }
 
@@ -375,7 +381,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     java.lang.Exception("Empty account")
 
                 val validatedEmail = FirebaseLocator.removeForbiddenCharactersFromEmail((account?.email)!!)
-                setCurrentUser( User(validatedEmail) )
+                setCurrentUser( User(validatedEmail, 0) )
                 Log.i(TAG, "Google sign in success, user ${currentUser.username}")
                 firebaseAuthWithGoogle(account)
             } catch (e: ApiException) {

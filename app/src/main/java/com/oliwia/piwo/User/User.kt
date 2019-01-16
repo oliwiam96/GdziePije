@@ -5,7 +5,7 @@ import com.oliwia.piwo.LocalisationService.ILocalise
 import com.oliwia.piwo.LocalisationService.Location
 import java.io.Serializable
 
-open class User(val username: String) : Serializable {
+open class User(val username: String, val id: Long) : Serializable {
     fun updateLocation(location: Location, updateService: ILocalise,callback: (User) -> Unit){
         this.location = location
         updateService.putLocalisation(this.username, this.location)
@@ -30,7 +30,7 @@ open class User(val username: String) : Serializable {
     override fun toString(): String = "User $username, location: $location"
 
     companion object {
-        val empty = User("")
+        val empty = User("", 0)
         private const val serialVersionUID = 1234567890L
     }
 }

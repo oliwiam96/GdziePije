@@ -18,7 +18,7 @@ class FirebaseLocator : ILocalise {
 
                 override fun onDataChange(p0: DataSnapshot) {
                     Log.i(loggerTag, "Data has been changed: $p0")
-                    callback.invoke(User(user), Location(0.0, 0.0, Date()))
+                    callback.invoke(User(user, 0), Location(0.0, 0.0, Date()))
                 }
             }
         )
