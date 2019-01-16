@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     val notificationManager = ToastNotificator(this)
     val mapsHandler = MapsHandler(::onMapReady)
 
-    val zoomLevel = 10.0f
+    val zoomLevel = 14.0f
     val psychodelaX = 52.408210
     val psychodelaY = 16.935618
 
@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     lateinit var psychodelaPolyline: Polyline
     var routeClicked = false
     var friends: ArrayList<User> = arrayListOf<User>(User("Jakub Tomczak", 1), User("Konrad Kubzdela", 2), User("Oliwia Masian", 3),
-            User("Jerzy Niemczyk", 4), User("Filip Błaszczyk", 5), User("Jacek Matczyński", 6),
+            User("Roman Niemczyk", 4), User("Filip Błaszczyk", 5), User("Jacek Matczyński", 6),
             User("Kuba Berezowski", 7), User("Mateusz Kudła", 8), User("Szymon Lewek", 9))
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -185,13 +185,24 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         mapsHandler.addMarker(MarkerOptions()
                 .position(paulina)
                 .title("Paulina")
-                .snippet("Piąteczek")
-                .icon(bitmapDescriptorFromVector(this, R.drawable.ic_person_pin_circle_black_24dp)))
+                .icon(BitmapDescriptorFactory
+                        .defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+        //.icon(bitmapDescriptorFromVector(this, R.drawable.ic_person_pin_circle_black_24dp)))
 
 
         val psychodela = LatLng(psychodelaX, psychodelaY)
         mapsHandler.addMarker(MarkerOptions().position(psychodela).title("Psychodela"))
         mapsHandler.moveCameraOnPosition(psychodela, zoomLevel)
+
+        for (user in friends) {
+            val position = LatLng(paulinaX - 0.015 + Math.random() * 0.03,
+                    paulinaY - 0.015 + Math.random() * 0.03)
+            mapsHandler.addMarker(MarkerOptions()
+                    .position(position)
+                    .title(user.username)
+                    .icon(BitmapDescriptorFactory
+                            .defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+        }
 
         mapsHandler.setOnMarkerClickListener { marker ->
 
@@ -257,6 +268,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 // show the popup window
                 // which view you pass in doesn't matter, it is only used for the window tolken
                 popupWindow.showAtLocation(window.decorView.rootView, Gravity.BOTTOM, 0, 0)
+
+                val nameText = popupView.findViewById(R.id.name_person) as TextView
+                nameText.text = marker.title
+
                 val distanceText = popupView.findViewById(R.id.distance_person) as TextView
                 val t = CalculationByDistance(currentUser.location.toLatLng(), LatLng(paulinaX, paulinaY))
                 distanceText.text = String.format("%.2f", t) + "km"
