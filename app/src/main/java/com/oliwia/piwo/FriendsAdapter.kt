@@ -12,12 +12,7 @@ import com.oliwia.piwo.User.User
  * Created by Oliwia on 16.01.2019.
  */
 
-class FriendsAdapter(private val context: Context) : BaseAdapter(), ListAdapter {
-    var list: MutableList<User> = mutableListOf<User>(User("Jakub Tomczak", 1), User("Konrad Kubzdela",2), User("Oliwia Masian", 3))
-
-    init {
-    }
-
+class FriendsAdapter(private val context: Context, private val list: ArrayList<User>) : BaseAdapter(), ListAdapter {
 
     override fun getCount(): Int {
         return list.size
