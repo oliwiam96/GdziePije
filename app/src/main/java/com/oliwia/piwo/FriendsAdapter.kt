@@ -41,4 +41,6 @@ class FriendsAdapter(private val context: Context, private val list: ArrayList<U
 
         return view;
     }
+
+
 }

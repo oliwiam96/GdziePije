@@ -25,6 +25,10 @@
             android:id="@+id/friends"
             android:icon="@drawable/ic_people_black_24dp"
             android:title="Znajomi" />
+        <item
+            android:id="@+id/addFriends"
+            android:icon="@drawable/ic_people_black_24dp"
+            android:title="Dodaj znajomych" />
 
         <item
             android:id="@+id/sign_in"

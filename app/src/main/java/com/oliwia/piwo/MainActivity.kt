@@ -28,9 +28,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
 import android.widget.TextView
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
@@ -342,6 +339,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 // notificationManager.displayNotification("I'll be there for you!", 200)
                 openFriendsActivity()
             }
+            R.id.addFriends ->{
+                openAddFriendsActivity()
+            }
             R.id.sign_in -> signIn()
             R.id.sign_out -> signOut()
         }
@@ -365,6 +365,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             putExtra(EXTRA_FRIENDS, friends)
         }
         startActivityForResult(intent, REQUEST_CODE_FRIENDS)
+    }
+
+    fun openAddFriendsActivity(){
+        val intent =  Intent(this, com.oliwia.piwo.AddFriendActivity::class.java)
+        startActivity(intent)
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -391,6 +396,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         return Radius * c
     }
+
+
 
     // GOOGLE sign in
     public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

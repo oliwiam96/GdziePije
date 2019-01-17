@@ -57,6 +57,10 @@
         <activity
             android:name=".FriendsActivity"
             android:label="GdziePije" />
+        <activity
+            android:name=".AddFriendActivity"
+            android:windowSoftInputMode="adjustPan"
+            android:label="GdziePije" />
     </application>
 
 </manifest>
